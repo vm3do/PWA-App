@@ -1,4 +1,5 @@
-const cacheName = "pwa-cache2";
+const cacheName = "pwa-cache3";
+const dynamicCache = "dynamic-cache";
 // URLs
 const assets = [
   "/",
@@ -43,11 +44,17 @@ self.addEventListener("activate", (evt) => {
 
 self.addEventListener("fetch", (evt) => {
   //   console.log("service worker fetched data", evt);
+  if(!evt.request.url.startsWith('http')){
+    return;
+  }
+
   evt.respondWith(
     caches.match(evt.request).then((cacheRes) => {
       return cacheRes || fetch(evt.request).then(fetchReq => {
-        caches.put(evt.request.url, fetchReq.clone());
-        return fetchReq;
+        return caches.open(dynamicCache).then(cache => {
+            cache.put(evt.request.url, fetchReq.clone());
+            return fetchReq;
+        })
 
       });
     })
