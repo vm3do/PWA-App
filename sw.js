@@ -1,4 +1,4 @@
-const cacheName = "pwa-cache";
+const cacheName = "pwa-cache2";
 // URLs
 const assets = [
   "/",
@@ -15,7 +15,8 @@ const assets = [
 
 self.addEventListener("install", (evt) => {
   evt.waitUntil(
-    caches.open(cacheName)
+    caches
+      .open(cacheName)
       .then((cache) => {
         console.log("caching files");
         cache.addAll(assets);
@@ -27,15 +28,28 @@ self.addEventListener("install", (evt) => {
 });
 
 self.addEventListener("activate", (evt) => {
-  console.log("service worker activated");
+  evt.waitUntil(
+    caches.keys().then((keys) => {
+
+      return Promise.all(
+
+        keys.filter((key) => key !== cacheName)
+            .map((key) => caches.delete(key))
+
+      );
+    })
+  );
 });
 
 self.addEventListener("fetch", (evt) => {
-//   console.log("service worker fetched data", evt);
-    evt.respondWith(
-        caches.match(evt.request)
-        .then(cacheRes => {
-            return cacheRes || fetch(evt.request);
-        })
-    )
+  //   console.log("service worker fetched data", evt);
+  evt.respondWith(
+    caches.match(evt.request).then((cacheRes) => {
+      return cacheRes || fetch(evt.request).then(fetchReq => {
+        caches.put(evt.request.url, fetchReq.clone());
+        return fetchReq;
+
+      });
+    })
+  );
 });
